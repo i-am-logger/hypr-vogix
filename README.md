@@ -10,6 +10,11 @@ Focus overlays your entire screen with shades of a single color palette, creatin
 
 Built as a Rust CLI that generates GLSL shaders and applies them via Hyprland's native `decoration:screen_shader`. Works on all content including fullscreen apps. Launch it from your keybinds.
 
+| | | | |
+|---|---|---|---|
+| ![military](docs/military.png) | ![amber](docs/amber.png) | ![cyber](docs/cyber.png) | ![white](docs/white.jpeg) |
+| **military** | **amber** | **cyber** | **white** |
+
 ## Themes
 
 | Theme | Color | Wavelength | Vibe |
