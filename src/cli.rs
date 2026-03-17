@@ -28,6 +28,10 @@ pub struct Cli {
     #[arg(short, long, value_name = "ALGO", requires = "theme", value_parser = parse_invert)]
     pub invert: Option<String>,
 
+    /// Restore last saved state; use --theme/--opacity/etc. as fallback if no state exists
+    #[arg(long)]
+    pub restore: bool,
+
     /// Turn off the current overlay
     #[arg(long)]
     pub off: bool,
@@ -165,6 +169,28 @@ mod tests {
         assert!(
             Cli::try_parse_from(["hypr-vogix", "--theme", "x", "--saturation", "3.0"]).is_err()
         );
+    }
+
+    #[test]
+    fn parse_restore() {
+        let cli = Cli::try_parse_from(["hypr-vogix", "--restore"]).unwrap();
+        assert!(cli.restore);
+    }
+
+    #[test]
+    fn parse_restore_with_fallback() {
+        let cli = Cli::try_parse_from([
+            "hypr-vogix",
+            "--restore",
+            "--theme",
+            "military",
+            "--opacity",
+            "0.7",
+        ])
+        .unwrap();
+        assert!(cli.restore);
+        assert_eq!(cli.theme.as_deref(), Some("military"));
+        assert!((cli.opacity - 0.7).abs() < f32::EPSILON);
     }
 
     #[test]

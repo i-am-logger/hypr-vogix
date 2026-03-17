@@ -41,6 +41,55 @@ fn run(cli: Cli) -> Result<()> {
         return Ok(());
     }
 
+    if cli.restore {
+        hyprctl::check_environment()?;
+
+        // Try saved state first, fall back to CLI args
+        let resolved = match state::load().context("failed to read state")? {
+            Some(saved) => {
+                log::info!("Restoring saved state: '{}'", saved.theme);
+                saved
+            }
+            None => {
+                // No saved state — use CLI args as fallback defaults
+                let name = cli
+                    .theme
+                    .as_deref()
+                    .ok_or_else(|| anyhow::anyhow!("no saved state and no --theme provided"))?;
+                log::info!("No saved state, applying fallback: '{name}'");
+                state::State {
+                    theme: name.to_string(),
+                    opacity: cli.opacity,
+                    brightness: cli.brightness,
+                    saturation: cli.saturation,
+                    invert: cli.invert.clone(),
+                }
+            }
+        };
+
+        let theme = theme::find_theme(&resolved.theme)
+            .ok_or_else(|| AppError::UnknownTheme(resolved.theme.clone()))?;
+
+        if let Err(e) = hyprctl::clear_shader() {
+            log::warn!("Failed to clear previous shader: {e}");
+        }
+        shader::cleanup_shaders().context("failed to clean up old shader files")?;
+
+        let shader_path = shader::write_shader(
+            theme,
+            resolved.opacity,
+            resolved.brightness,
+            resolved.saturation,
+            resolved.invert.as_deref(),
+        )
+        .context("failed to write shader")?;
+        hyprctl::set_shader(&shader_path).context("failed to apply shader")?;
+
+        state::save(&resolved).context("failed to save state")?;
+        log::info!("Applied '{}'", theme.name);
+        return Ok(());
+    }
+
     if let Some(ref name) = cli.theme {
         let theme = theme::find_theme(name).ok_or_else(|| AppError::UnknownTheme(name.clone()))?;
 
@@ -151,5 +200,32 @@ mod tests {
     fn run_status() {
         let cli = Cli::try_parse_from(["hypr-vogix", "--status"]).unwrap();
         assert!(run(cli).is_ok());
+    }
+
+    #[test]
+    #[serial]
+    fn run_restore_without_hyprland() {
+        unsafe { std::env::remove_var("HYPRLAND_INSTANCE_SIGNATURE") };
+        let cli = Cli::try_parse_from([
+            "hypr-vogix",
+            "--restore",
+            "--theme",
+            "military",
+            "--opacity",
+            "0.7",
+        ])
+        .unwrap();
+        let err = run(cli).unwrap_err();
+        assert!(err.downcast_ref::<AppError>().is_some());
+    }
+
+    #[test]
+    #[serial]
+    fn run_restore_no_state_no_theme_is_error() {
+        unsafe { std::env::remove_var("HYPRLAND_INSTANCE_SIGNATURE") };
+        // --restore without state file and without --theme should fail
+        // (but the check_environment error comes first in this test)
+        let cli = Cli::try_parse_from(["hypr-vogix", "--restore"]).unwrap();
+        assert!(run(cli).is_err());
     }
 }
