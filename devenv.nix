@@ -46,7 +46,7 @@ in
 
   # Development shell setup
   enterShell = ''
-    clear
+    printf '\033[2J\033[H'
     ${pkgs.figlet}/bin/figlet "${packageName}"
     echo
     {
