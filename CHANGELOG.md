@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/i-am-logger/hypr-vogix/compare/hypr-vogix-v1.6.1...hypr-vogix-v1.7.0) (2026-03-17)
+
+
+### Features
+
+* add --restore flag and flake.nix ([7a8b1c0](https://github.com/i-am-logger/hypr-vogix/commit/7a8b1c0bc0a3fff7d1401e7a3eceb1cb14161492))
+
 ## [1.6.1](https://github.com/i-am-logger/hypr-vogix/compare/hypr-vogix-v1.6.0...hypr-vogix-v1.6.1) (2026-03-17)
 
 
