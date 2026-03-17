@@ -51,15 +51,10 @@ void main() {
     vec4 pixColor = texture(tex, v_texcoord);
 
 {INVERT_BLOCK}
-    // Rec. 709 luminance
+    // Normal monochromatic pipeline
     float luminance = dot(pixColor.rgb, vec3({LUMA_R}, {LUMA_G}, {LUMA_B}));
-
-    // Luminance mapped to theme color, scaled by brightness
     vec3 mono = luminance * themeColor * brightness;
-
-    // Blend original and monochromatic
     vec3 result = mix(pixColor.rgb, mono, intensity);
-
     fragColor = vec4(result, pixColor.a);
 }
 "#;
@@ -76,14 +71,18 @@ pub fn generate_shader(
 ) -> String {
     let color = theme.color.with_saturation(saturation);
     let invert_block = if invert_experimental {
-        // Experimental: your algorithm goes here
-        // Currently: simple Novikov shift as a starting point to iterate on
+        // Experimental: add theme color to every pixel
         concat!(
-            "    // Experimental inversion algorithm\n",
-            "    float mn = min(min(pixColor.r, pixColor.g), pixColor.b);\n",
+            "    // HSV value inversion mapped to theme color\n",
             "    float mx = max(max(pixColor.r, pixColor.g), pixColor.b);\n",
-            "    float offset = 0.17 - mx - mn + 1.0;\n",
-            "    pixColor.rgb = (pixColor.rgb + offset) / 1.17;\n",
+            "    float inv = 1.0 - mx;\n",
+            "    float invBright = (0.1 + inv * 0.9) * brightness;\n",
+            "    vec3 themed = themeColor * invBright;\n",
+            "    vec3 colored = (mx > 0.001) ? pixColor.rgb * (invBright / mx) : vec3(invBright);\n",
+            "    fragColor = vec4(mix(colored, themed, intensity), pixColor.a);\n",
+            "    return;\n",
+            "    fragColor = vec4(pixColor.rgb, pixColor.a);\n",
+            "    return;\n",
         )
     } else if invert {
         concat!(
@@ -109,6 +108,7 @@ pub fn generate_shader(
         ""
     };
     SHADER_TEMPLATE
+        .replace("{INVERT_BLOCK}", invert_block)
         .replace("{R}", &format!("{:.4}", color.r))
         .replace("{G}", &format!("{:.4}", color.g))
         .replace("{B}", &format!("{:.4}", color.b))
@@ -120,7 +120,6 @@ pub fn generate_shader(
         .replace("{LUMA_R}", &format!("{:.4}", theme::LUMA_R))
         .replace("{LUMA_G}", &format!("{:.4}", theme::LUMA_G))
         .replace("{LUMA_B}", &format!("{:.4}", theme::LUMA_B))
-        .replace("{INVERT_BLOCK}", invert_block)
 }
 
 /// Return the directory for shader files.
@@ -331,7 +330,7 @@ mod tests {
     #[test]
     fn generate_invert_experimental() {
         let src = generate_shader(&test_theme(), 1.0, 1.0, 1.0, false, true);
-        assert!(src.contains("Experimental inversion"));
+        assert!(src.contains("HSV value inversion"));
     }
 
     #[test]
