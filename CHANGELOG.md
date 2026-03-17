@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/i-am-logger/hypr-vogix/compare/hypr-vogix-v1.8.0...hypr-vogix-v1.9.0) (2026-03-17)
+
+
+### Features
+
+* document --restore flag and nix flake usage ([11d4e5a](https://github.com/i-am-logger/hypr-vogix/commit/11d4e5ace6fea9fd783d1f0c4f58758cb3a0416b))
+
 ## [1.8.0](https://github.com/i-am-logger/hypr-vogix/compare/hypr-vogix-v1.7.0...hypr-vogix-v1.8.0) (2026-03-17)
 
 
