@@ -142,8 +142,8 @@ pub fn find_theme(name: &str) -> Option<&'static Theme> {
 mod tests {
     use super::*;
 
-    // OKLAB reference implementation for testing the GLSL shader math.
-    // These mirror the GLSL functions in shader.rs exactly.
+    // OKLAB reference implementation for validating shader inversion logic.
+    // Used by contract tests to verify color transformations.
     impl Color {
         #[allow(clippy::excessive_precision)]
         fn to_oklab(&self) -> [f32; 3] {

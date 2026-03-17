@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::errors::{FocusError, Result};
+use crate::errors::{AppError, Result};
 
 /// Persisted state of the current focus overlay.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,16 +32,14 @@ pub fn state_path() -> PathBuf {
 pub fn save(state: &State) -> Result<()> {
     let path = state_path();
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent).map_err(|e| FocusError::StateWriteFailed {
+        fs::create_dir_all(parent).map_err(|e| AppError::StateWriteFailed {
             path: path.clone(),
             source: e,
         })?;
     }
-    let content = toml::to_string_pretty(state).map_err(|e| FocusError::StateWriteFailed {
-        path: path.clone(),
-        source: std::io::Error::new(std::io::ErrorKind::InvalidData, e),
-    })?;
-    fs::write(&path, content).map_err(|e| FocusError::StateWriteFailed {
+    let content =
+        toml::to_string_pretty(state).map_err(|e| AppError::StateSerialize(e.to_string()))?;
+    fs::write(&path, content).map_err(|e| AppError::StateWriteFailed {
         path: path.clone(),
         source: e,
     })?;
@@ -55,14 +53,12 @@ pub fn load() -> Result<Option<State>> {
     if !path.exists() {
         return Ok(None);
     }
-    let content = fs::read_to_string(&path).map_err(|e| FocusError::StateReadFailed {
+    let content = fs::read_to_string(&path).map_err(|e| AppError::StateReadFailed {
         path: path.clone(),
         source: e,
     })?;
-    let state: State = toml::from_str(&content).map_err(|e| FocusError::StateReadFailed {
-        path: path.clone(),
-        source: std::io::Error::new(std::io::ErrorKind::InvalidData, e),
-    })?;
+    let state: State =
+        toml::from_str(&content).map_err(|e| AppError::StateDeserialize(e.to_string()))?;
     Ok(Some(state))
 }
 
@@ -70,7 +66,7 @@ pub fn load() -> Result<Option<State>> {
 pub fn clear() -> Result<()> {
     let path = state_path();
     if path.exists() {
-        fs::remove_file(&path).map_err(|e| FocusError::StateWriteFailed {
+        fs::remove_file(&path).map_err(|e| AppError::StateWriteFailed {
             path: path.clone(),
             source: e,
         })?;
@@ -123,6 +119,25 @@ mod tests {
             assert!((loaded.opacity - 1.0).abs() < f32::EPSILON);
             assert!((loaded.brightness - 0.8).abs() < f32::EPSILON);
             assert!((loaded.saturation - 1.2).abs() < f32::EPSILON);
+        });
+    }
+
+    #[test]
+    #[serial]
+    fn save_and_load_with_invert() {
+        with_temp_state_home(|| {
+            let state = State {
+                theme: "cyber".into(),
+                opacity: 0.8,
+                brightness: 1.0,
+                saturation: 1.0,
+                invert: Some("oklab".into()),
+            };
+            save(&state).unwrap();
+
+            let loaded = load().unwrap().unwrap();
+            assert_eq!(loaded.theme, "cyber");
+            assert_eq!(loaded.invert, Some("oklab".into()));
         });
     }
 

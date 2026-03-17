@@ -1,12 +1,12 @@
 use std::path::Path;
 use std::process::Command;
 
-use crate::errors::{FocusError, Result};
+use crate::errors::{AppError, Result};
 
 /// Check that Hyprland is running by verifying the instance signature env var.
 pub fn check_environment() -> Result<()> {
     if std::env::var("HYPRLAND_INSTANCE_SIGNATURE").is_err() {
-        return Err(FocusError::HyprlandNotRunning);
+        return Err(AppError::HyprlandNotRunning);
     }
     Ok(())
 }
@@ -30,9 +30,9 @@ pub fn clear_shader() -> Result<()> {
 fn run_hyprctl(args: &[&str]) -> Result<()> {
     let output = Command::new("hyprctl").args(args).output().map_err(|e| {
         if e.kind() == std::io::ErrorKind::NotFound {
-            FocusError::HyprctlNotFound
+            AppError::HyprctlNotFound
         } else {
-            FocusError::HyprctlFailed {
+            AppError::HyprctlFailed {
                 code: -1,
                 detail: e.to_string(),
             }
@@ -47,7 +47,7 @@ fn run_hyprctl(args: &[&str]) -> Result<()> {
         } else {
             stderr.into_owned()
         };
-        return Err(FocusError::HyprctlFailed {
+        return Err(AppError::HyprctlFailed {
             code: output.status.code().unwrap_or(-1),
             detail,
         });
@@ -66,7 +66,7 @@ mod tests {
     fn check_environment_no_signature() {
         unsafe { std::env::remove_var("HYPRLAND_INSTANCE_SIGNATURE") };
         let err = check_environment().unwrap_err();
-        assert!(matches!(err, FocusError::HyprlandNotRunning));
+        assert!(matches!(err, AppError::HyprlandNotRunning));
     }
 
     #[test]
@@ -84,15 +84,15 @@ mod tests {
             .output()
             .map_err(|e| {
                 if e.kind() == std::io::ErrorKind::NotFound {
-                    FocusError::HyprctlNotFound
+                    AppError::HyprctlNotFound
                 } else {
-                    FocusError::HyprctlFailed {
+                    AppError::HyprctlFailed {
                         code: -1,
                         detail: e.to_string(),
                     }
                 }
             })
             .unwrap_err();
-        assert!(matches!(err, FocusError::HyprctlNotFound));
+        assert!(matches!(err, AppError::HyprctlNotFound));
     }
 }

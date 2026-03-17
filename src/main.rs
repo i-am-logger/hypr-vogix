@@ -9,7 +9,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 
 use cli::Cli;
-use errors::FocusError;
+use errors::AppError;
 
 fn main() {
     env_logger::init();
@@ -42,8 +42,7 @@ fn run(cli: Cli) -> Result<()> {
     }
 
     if let Some(ref name) = cli.theme {
-        let theme =
-            theme::find_theme(name).ok_or_else(|| FocusError::UnknownTheme(name.clone()))?;
+        let theme = theme::find_theme(name).ok_or_else(|| AppError::UnknownTheme(name.clone()))?;
 
         hyprctl::check_environment()?;
 
@@ -127,7 +126,7 @@ mod tests {
     fn run_unknown_theme() {
         let cli = Cli::try_parse_from(["hypr-vogix", "--theme", "nonexistent"]).unwrap();
         let err = run(cli).unwrap_err();
-        assert!(err.downcast_ref::<FocusError>().is_some());
+        assert!(err.downcast_ref::<AppError>().is_some());
     }
 
     #[test]
@@ -136,7 +135,7 @@ mod tests {
         unsafe { std::env::remove_var("HYPRLAND_INSTANCE_SIGNATURE") };
         let cli = Cli::try_parse_from(["hypr-vogix", "--off"]).unwrap();
         let err = run(cli).unwrap_err();
-        assert!(err.downcast_ref::<FocusError>().is_some());
+        assert!(err.downcast_ref::<AppError>().is_some());
     }
 
     #[test]
@@ -145,7 +144,7 @@ mod tests {
         unsafe { std::env::remove_var("HYPRLAND_INSTANCE_SIGNATURE") };
         let cli = Cli::try_parse_from(["hypr-vogix", "--theme", "military"]).unwrap();
         let err = run(cli).unwrap_err();
-        assert!(err.downcast_ref::<FocusError>().is_some());
+        assert!(err.downcast_ref::<AppError>().is_some());
     }
 
     #[test]

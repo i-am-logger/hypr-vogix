@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use crate::errors::{FocusError, Result};
+use crate::errors::{AppError, Result};
 use crate::theme::{self, Theme};
 
 const SHADER_TEMPLATE: &str = r#"#version 300 es
@@ -216,14 +216,14 @@ pub fn generate_shader(
 }
 
 /// Return the directory for shader files.
-/// Prefers `$XDG_RUNTIME_DIR/focus/`, falls back to `/tmp/focus/`.
+/// Prefers `$XDG_RUNTIME_DIR/hypr-vogix/`, falls back to `/tmp/hypr-vogix/`.
 pub fn shader_dir() -> Result<PathBuf> {
     let base = std::env::var("XDG_RUNTIME_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| PathBuf::from("/tmp"));
 
     if !base.exists() {
-        return Err(FocusError::NoRuntimeDir);
+        return Err(AppError::NoRuntimeDir);
     }
 
     Ok(base.join("hypr-vogix"))
@@ -238,7 +238,7 @@ pub fn write_shader(
     invert: Option<&str>,
 ) -> Result<PathBuf> {
     let dir = shader_dir()?;
-    fs::create_dir_all(&dir).map_err(|e| FocusError::ShaderWriteFailed {
+    fs::create_dir_all(&dir).map_err(|e| AppError::ShaderWriteFailed {
         path: dir.clone(),
         source: e,
     })?;
@@ -256,7 +256,7 @@ pub fn write_shader(
     ));
     let source = generate_shader(theme, intensity, brightness, saturation, invert);
 
-    fs::write(&path, source).map_err(|e| FocusError::ShaderWriteFailed {
+    fs::write(&path, source).map_err(|e| AppError::ShaderWriteFailed {
         path: path.clone(),
         source: e,
     })?;
@@ -272,7 +272,7 @@ pub fn cleanup_shaders() -> Result<()> {
         return Ok(());
     }
 
-    let entries = fs::read_dir(&dir).map_err(|e| FocusError::ShaderRemoveFailed {
+    let entries = fs::read_dir(&dir).map_err(|e| AppError::ShaderRemoveFailed {
         path: dir.clone(),
         source: e,
     })?;
@@ -284,7 +284,7 @@ pub fn cleanup_shaders() -> Result<()> {
             .and_then(|n| n.to_str())
             .is_some_and(|n| n.starts_with("hypr-vogix-") && n.ends_with(".glsl"))
         {
-            fs::remove_file(&path).map_err(|e| FocusError::ShaderRemoveFailed {
+            fs::remove_file(&path).map_err(|e| AppError::ShaderRemoveFailed {
                 path: path.clone(),
                 source: e,
             })?;

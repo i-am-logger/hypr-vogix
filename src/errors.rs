@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
-pub enum FocusError {
+pub enum AppError {
     #[error("hyprctl not found in PATH -- is Hyprland installed?")]
     HyprctlNotFound,
 
@@ -38,11 +38,17 @@ pub enum FocusError {
         source: std::io::Error,
     },
 
+    #[error("failed to serialize state: {0}")]
+    StateSerialize(String),
+
+    #[error("failed to deserialize state: {0}")]
+    StateDeserialize(String),
+
     #[error("no runtime directory available (XDG_RUNTIME_DIR not set, /tmp fallback failed)")]
     NoRuntimeDir,
 }
 
-pub type Result<T> = std::result::Result<T, FocusError>;
+pub type Result<T> = std::result::Result<T, AppError>;
 
 #[cfg(test)]
 mod tests {
@@ -50,16 +56,16 @@ mod tests {
 
     #[test]
     fn error_display_messages() {
-        let err = FocusError::HyprctlNotFound;
+        let err = AppError::HyprctlNotFound;
         assert!(err.to_string().contains("hyprctl not found"));
 
-        let err = FocusError::HyprlandNotRunning;
+        let err = AppError::HyprlandNotRunning;
         assert!(err.to_string().contains("HYPRLAND_INSTANCE_SIGNATURE"));
 
-        let err = FocusError::UnknownTheme("foo".into());
+        let err = AppError::UnknownTheme("foo".into());
         assert!(err.to_string().contains("foo"));
 
-        let err = FocusError::HyprctlFailed {
+        let err = AppError::HyprctlFailed {
             code: 1,
             detail: "bad".into(),
         };
