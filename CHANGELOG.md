@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/i-am-logger/hypr-vogix/compare/hypr-vogix-v1.4.0...hypr-vogix-v1.5.0) (2026-03-17)
+
+
+### Features
+
+* add --invert flag for brightness inversion ([aad269d](https://github.com/i-am-logger/hypr-vogix/commit/aad269d04c22d7a3e8d28b0a122d16d3f7622661))
+* OKLAB lightness inversion and experimental algorithm slot ([2e0ad00](https://github.com/i-am-logger/hypr-vogix/commit/2e0ad001afa63e2d2b8f671d87392a54d5641f77))
+
 ## [1.4.0](https://github.com/i-am-logger/hypr-vogix/compare/hypr-vogix-v1.3.0...hypr-vogix-v1.4.0) (2026-03-16)
 
 
