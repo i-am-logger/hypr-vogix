@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.1](https://github.com/i-am-logger/hypr-vogix/compare/hypr-vogix-v1.9.0...hypr-vogix-v1.9.1) (2026-03-17)
+
+
+### Bug Fixes
+
+* build overlay package with consumer's nixpkgs ([1db45cc](https://github.com/i-am-logger/hypr-vogix/commit/1db45cc92edd332088f56dc78ad2117880470bda))
+
 ## [1.9.0](https://github.com/i-am-logger/hypr-vogix/compare/hypr-vogix-v1.8.0...hypr-vogix-v1.9.0) (2026-03-17)
 
 
